@@ -28,6 +28,7 @@ Conservo las secciones **Inicio, Empresa, Productos, Oferta del mes, Localizaci�
 | Flask | Publicación del sitio y endpoint de contacto. |
 | pyodbc | Acceso a SQL Server mediante ODBC y consultas parametrizadas. |
 | python-dotenv | Carga de configuración desde variables de entorno y `.env`. |
+| smtplib, ssl y EmailMessage | Acuse de recepción por SMTP con SSL/TLS; bibliotecas estándar de Python. |
 | Microsoft SQL Server | Persistencia, relaciones, restricciones y operaciones T-SQL. |
 | ODBC Driver 18 for SQL Server | Controlador utilizado por pyodbc. |
 
@@ -59,6 +60,7 @@ Utilizo Flask como intermediario: el navegador no accede directamente a SQL Serv
 TechMindSolutions_AA2/
 ├── app.py
 ├── conexion.py
+├── correo.py
 ├── .env                 # Configuración local, excluida de Git
 ├── .env.example         # Plantilla compartida
 ├── .gitignore
@@ -83,6 +85,7 @@ TechMindSolutions_AA2/
 |---|---|
 | `app.py` | Rutas Flask, validación, inserción, transacciones y respuestas HTTP. |
 | `conexion.py` | Carga de variables y apertura de conexiones con autenticación de Windows. |
+| `correo.py` | Entrega del acuse personalizado mediante SMTP_SSL, independiente de la transacción SQL. |
 | `index.html` | Contenido y formulario con etiquetas visibles y región de estado accesible. |
 | `css/styles.css` | Colores, tipografía y distribución; ancho máximo de 1120 px y ajustes para pantallas de hasta 700 px. |
 | `js/script.js` | Validación, envío JSON, bloqueo de solicitudes simultáneas y resultados. |
@@ -190,13 +193,13 @@ Abro **http://127.0.0.1:5000**. Accedo mediante Flask para que funcione la API r
 
 El formulario contiene **Nombre completo**, **Correo electrónico** y **Mensaje**, todos obligatorios y marcados con asterisco. Sus atributos `name` son `nombre`, `email` y `mensaje`. Nombre admite hasta 100 caracteres y correo hasta 150.
 
-Al pulsar **Guardar**, valido los datos y los envío mediante `fetch`, método HTTP POST y `Content-Type: application/json`. Deshabilito el botón y bloqueo otros envíos simultáneos desde el formulario mientras espero la respuesta. Solo muestro éxito y limpio los campos después de recibir una respuesta satisfactoria con `ok: true`. Ante un fallo conservo los valores. No envío correo de confirmación.
+Al pulsar **Guardar**, valido los datos y los envío mediante `fetch`, método HTTP POST y `Content-Type: application/json`. Deshabilito el botón y bloqueo otros envíos simultáneos desde el formulario mientras espero la respuesta. Solo muestro éxito y limpio los campos después de recibir una respuesta satisfactoria con `ok: true`. Ante un fallo de guardado conservo los valores. Después del commit intento enviar un acuse de recepción personalizado; si falla SMTP, informo que el contacto quedó guardado y limpio el formulario para evitar un nuevo envío innecesario.
 
 El endpoint exige un objeto JSON con tres cadenas: `nombre`, `email` y `mensaje`. Rechaza campos ausentes, tipos incorrectos, valores vacíos o compuestos únicamente por espacios, formato básico de correo inválido y longitudes excesivas. Recorta los espacios de los extremos antes de almacenar. Cuenta unidades UTF-16 para respetar los límites de las columnas NVARCHAR. No comprueba que la dirección de correo exista.
 
 | Código HTTP | Resultado |
 |---|---|
-| `201` | Inserción confirmada: `{"ok": true, "mensaje": "Tu mensaje se ha guardado correctamente."}`. |
+| `201` | Inserción confirmada; devuelve `ok: true`, `correo_enviado` y un `mensaje` que distingue aceptación SMTP o fallo del acuse. |
 | `400` | Datos inválidos, objeto incorrecto o JSON mal formado. |
 | `413` | Solicitud superior al límite de 1 MiB. |
 | `415` | Contenido que no se declara como JSON. |
@@ -216,7 +219,51 @@ Las respuestas controladas de error contienen `ok: false` y `mensaje`. No hay un
 - **Exclusiones de Git:** `.gitignore` excluye `.env`, `.env.*`, `.venv/`, `__pycache__/`, archivos compilados de Python, `.vscode/` y `*.log`. La excepción `!.env.example` permite compartir la plantilla. Estas reglas no eliminan archivos que ya estuvieran versionados.
 - **Desarrollo local:** servidor limitado a localhost y depurador desactivado. `TrustServerCertificate=yes` omite la validación del certificado SQL Server para este entorno académico; no configura HTTPS en Flask.
 
-Estas medidas no garantizan seguridad completa ni preparación para producción. El bloqueo del formulario no garantiza evitar duplicados al reintentar después de perder una respuesta. No se han implementado SMTP, FTP ni la API meteorológica.
+Estas medidas no garantizan seguridad completa ni preparación para producción. El bloqueo del formulario no garantiza evitar duplicados al reintentar después de perder una respuesta. No se han implementado FTP ni la API meteorológica.
+
+## Acuse de recepción por SMTP
+
+Implemento el requisito 4 del paso 1 de AA2 mediante `correo.py`. Separo la entrega de correo del acceso a datos: Flask termina la transacción y cierra los recursos SQL antes de solicitar el acuse. El destinatario es el correo validado del formulario y el saludo utiliza el nombre proporcionado.
+
+Configuro estas variables en `.env`, utilizando `.env.example` como referencia y conservando la configuración de base de datos:
+
+```dotenv
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_USER=info@tech-mindsolutions.com
+SMTP_PASSWORD=
+SMTP_USE_SSL=true
+```
+
+Introduzco manualmente la contraseña del buzón únicamente en `.env` y reinicio Flask tras cambiarla. La contraseña se entrega vacía y no se debe incorporar a Git, capturas, registros ni respuestas HTTP. `.env` permanece excluido por `.gitignore`. Las variables del proceso tienen prioridad sobre el archivo local.
+
+Utilizo las bibliotecas estándar `smtplib`, `ssl` y `email.message.EmailMessage`, sin añadir dependencias. `SMTP_SSL` establece SSL/TLS desde el inicio en el puerto 465, con `ssl.create_default_context()` para verificar certificados y un timeout de 10 segundos. No desactivo la verificación TLS ni habilito depuración SMTP. Las excepciones se convierten en un resultado controlado sin registrar sus detalles, que podrían contener información sensible.
+
+El asunto es **Confirmación de recepción - TechMindSolutions** y el cuerpo es:
+
+```text
+Estimado/a [nombre]:
+
+Gracias por contactar con TechMindSolutions.
+
+Hemos recibido correctamente tu mensaje. Nuestro equipo revisará tu solicitud y se pondrá en contacto contigo lo antes posible.
+
+Saludos cordiales,
+Equipo de TechMindSolutions
+```
+
+Si falta la contraseña o la configuración es inválida, no intento la conexión SMTP y devuelvo `correo_enviado: false`. Cuando el servidor acepta el correo, devuelvo `correo_enviado: true`; esa aceptación no garantiza su llegada a la bandeja de entrada. Un fallo SMTP mantiene HTTP `201` y `ok: true` porque el registro ya se guardó. No ejecuto rollback ni reintentos automáticos por un fallo del correo.
+
+### Prueba manual del acuse pendiente
+
+No se han enviado correos reales durante esta implementación. Para probar posteriormente:
+
+1. Con `SMTP_PASSWORD` vacío, inicio Flask y envío un contacto con una dirección propia. Compruebo el guardado en SQL Server y el aviso de que no se pudo enviar el acuse. Esta prueba crea un contacto real, pero no intenta SMTP.
+2. Introduzco la contraseña válida en `.env`, reinicio Flask y envío otro contacto a un buzón controlado por mí. Compruebo el guardado, `correo_enviado: true` y la recepción del asunto y cuerpo personalizados, incluida la carpeta de correo no deseado.
+3. Para comprobar un fallo de autenticación, uso temporalmente una clave incorrecta, reinicio Flask y envío un nuevo contacto. Verifico que el registro permanezca, que se muestre el aviso de fallo del acuse y que la respuesta no incluya detalles técnicos ni credenciales. Restauro después la configuración correcta.
+4. Compruebo que una solicitud inválida reciba HTTP `400`, sin insertar un contacto ni intentar enviar un correo.
+
+La entrega es síncrona: el formulario permanece bloqueado mientras espera el resultado SMTP. No debo reenviar un contacto ya guardado únicamente porque falle su acuse.
 
 ## Pruebas realizadas
 

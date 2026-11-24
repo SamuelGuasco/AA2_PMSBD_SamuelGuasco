@@ -7,6 +7,7 @@ from flask import Flask, jsonify, request, send_from_directory
 from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 
 from conexion import obtener_conexion
+from correo import enviar_acuse
 
 
 RAIZ = Path(__file__).resolve().parent
@@ -111,7 +112,14 @@ def guardar_contacto():
                 except Exception:
                     app.logger.exception("No pude cerrar un recurso de la base de datos.")
 
-    return jsonify(ok=True, mensaje="Tu mensaje se ha guardado correctamente."), 201
+    # Intento el acuse solo después del commit y fuera del bloque de transacción.
+    # Un fallo SMTP no revierte un contacto que ya quedó guardado.
+    correo_enviado = enviar_acuse(campos["nombre"], campos["email"])
+    if correo_enviado:
+        mensaje = "Tu mensaje se ha guardado correctamente y el servidor de correo ha aceptado el acuse de recepción."
+    else:
+        mensaje = "Tu mensaje se ha guardado correctamente, pero no se pudo enviar el correo de acuse de recepción. No necesitas volver a enviarlo."
+    return jsonify(ok=True, correo_enviado=correo_enviado, mensaje=mensaje), 201
 
 
 if __name__ == "__main__":

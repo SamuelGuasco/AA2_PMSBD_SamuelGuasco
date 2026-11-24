@@ -76,7 +76,8 @@ formulario.addEventListener('submit', async function (event) {
             return;
         }
         // Solo anuncio el éxito y limpio los campos después de la confirmación del servidor.
-        resultado.textContent = 'Tu mensaje se ha guardado correctamente.';
+        // Muestro también el estado del acuse: un fallo SMTP no significa que falló el guardado.
+        resultado.textContent = datos.mensaje;
         resultado.className = 'mensaje-exito';
         formulario.reset();
     } catch (error) {
