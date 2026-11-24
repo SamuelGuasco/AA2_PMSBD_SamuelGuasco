@@ -61,6 +61,7 @@ TechMindSolutions_AA2/
 ├── app.py
 ├── conexion.py
 ├── correo.py
+├── subir_ftp.py
 ├── .env                 # Configuración local, excluida de Git
 ├── .env.example         # Plantilla compartida
 ├── .gitignore
@@ -86,6 +87,7 @@ TechMindSolutions_AA2/
 | `app.py` | Rutas Flask, validación, inserción, transacciones y respuestas HTTP. |
 | `conexion.py` | Carga de variables y apertura de conexiones con autenticación de Windows. |
 | `correo.py` | Entrega del acuse personalizado mediante SMTP_SSL, independiente de la transacción SQL. |
+| `subir_ftp.py` | Prueba de conexión y copia controlada de fuentes por FTPS explícito. |
 | `index.html` | Contenido y formulario con etiquetas visibles y región de estado accesible. |
 | `css/styles.css` | Colores, tipografía y distribución; ancho máximo de 1120 px y ajustes para pantallas de hasta 700 px. |
 | `js/script.js` | Validación, envío JSON, bloqueo de solicitudes simultáneas y resultados. |
@@ -219,7 +221,43 @@ Las respuestas controladas de error contienen `ok: false` y `mensaje`. No hay un
 - **Exclusiones de Git:** `.gitignore` excluye `.env`, `.env.*`, `.venv/`, `__pycache__/`, archivos compilados de Python, `.vscode/` y `*.log`. La excepción `!.env.example` permite compartir la plantilla. Estas reglas no eliminan archivos que ya estuvieran versionados.
 - **Desarrollo local:** servidor limitado a localhost y depurador desactivado. `TrustServerCertificate=yes` omite la validación del certificado SQL Server para este entorno académico; no configura HTTPS en Flask.
 
-Estas medidas no garantizan seguridad completa ni preparación para producción. El bloqueo del formulario no garantiza evitar duplicados al reintentar después de perder una respuesta. No se han implementado FTP ni la API meteorológica.
+Estas medidas no garantizan seguridad completa ni preparación para producción. El bloqueo del formulario no garantiza evitar duplicados al reintentar después de perder una respuesta. No se ha implementado la API meteorológica.
+
+## Transferencia académica a Hostinger mediante FTPS
+
+Utilizo `subir_ftp.py` y `ftplib`, sin dependencias adicionales. El acceso probado corresponde a `srv1939.hstgr.io`, puerto 21, mediante FTPS explícito. Mantengo `FTP_USE_TLS=true`, la verificación de certificados con `ssl.create_default_context()` y el cifrado de datos con `prot_p()`. No uso FTP sin cifrado. Conservo las credenciales únicamente en `.env`, excluido de Git, junto con la configuración SQL y SMTP existente.
+
+El destino es **`/public_html/TechMindSolutions_AA2/`**, porque la cuenta no permite transferencias fuera de `public_html`. Creo la carpeta si no existe, sin modificar el sitio situado fuera de ella. El script no borra ni sobrescribe archivos existentes, tampoco dentro de esta carpeta. Rechaza enlaces o directorios cuya ubicación no pueda verificar mediante PWD y MLSD.
+
+Desde PowerShell, en la raíz del proyecto, pruebo conexión, autenticación, directorio actual y lectura por el canal de datos cifrado:
+
+```powershell
+.\.venv\Scripts\python.exe -B .\subir_ftp.py probar
+```
+
+`probar` no crea carpetas ni modifica archivos. Para subir, indico también la URL HTTPS real que corresponde a la carpeta del proyecto. Sustituyo `DOMINIO` por el dominio del sitio que sirve ese `public_html`, no por el servidor FTP:
+
+```powershell
+.\.venv\Scripts\python.exe -B .\subir_ftp.py subir --url-base "https://DOMINIO/TechMindSolutions_AA2/"
+```
+
+La URL debe terminar exactamente en `/TechMindSolutions_AA2/`, sin usuario, contraseña, consulta ni fragmento. El script verifica el certificado HTTPS y rechaza redirecciones. Una configuración de dominio incorrecta, un firewall, un proxy o reglas del hosting pueden impedir la comprobación: en ese caso no transfiero fuentes reales.
+
+### Protección de Python y SQL antes de transferirlos
+
+Creo una subcarpeta nueva **`protegido/`** dentro del destino. Primero subo un testigo aleatorio sin información sensible y verifico por HTTPS que devuelve HTTP 200 y exactamente su contenido. Esta comprobación confirma la correspondencia entre la ruta FTP y la URL pública.
+
+Después creo `protegido/.htaccess` con `Require all denied`, destinado a Apache/LiteSpeed. Verifico HTTP **403** para el testigo, dos archivos inocuos con extensiones `.py` y `.sql`, y el propio `.htaccess`. Solo después de completar estas comprobaciones transfiero Python y SQL reales. Si las reglas no son reconocidas, recibo otro código, falla TLS o no puedo comprobar la protección, aborto la subida de fuentes. No acepto un simple 404 como prueba de protección.
+
+La lista explícita permite el HTML, CSS, dos archivos JavaScript y logotipo en sus rutas relativas públicas. En `protegido/` guardo los cuatro módulos Python de la aplicación y transferencia, `requirements.txt`, `README.md` y `database/TechMindSolutions_AA2.sql`, conservando las subcarpetas. No transfiero `.env`, `.env.example`, `.git`, `.venv`, cachés, copias de seguridad ni archivos no enumerados. Debo revisar que los archivos permitidos no incluyan credenciales o datos personales añadidos manualmente; el script no analiza semánticamente su contenido.
+
+Los testigos y `.htaccess` permanecen para evidenciar el control; el script no elimina archivos remotos. Si ya existe `protegido/`, detengo la subida antes de escribir en ella, para no confiar en reglas previas ni sobrescribir fuentes. Una interrupción puede dejar una copia parcial; debo revisarla manualmente antes de decidir cómo continuar. Evito transferencias concurrentes porque FTP no garantiza una creación atómica sin sobrescritura mediante STOR.
+
+Muestro cada archivo confirmado y un resumen con cantidad y bytes, incluidos los controles de protección. Esta verificación refleja el estado observado antes de transferir y depende de que el hosting conserve sus reglas. Conviene comprobar después que las URLs de las fuentes reales siguen devolviendo 403 y repetir la revisión tras cambios de configuración.
+
+La copia no ejecuta Flask ni configura Python en Hostinger: el formulario conserva su endpoint relativo, que requiere un backend Flask desplegado por separado para funcionar allí. SQL Server continúa siendo local. Esta tarea no cambia el frontend ni configura ese despliegue.
+
+La conexión FTPS fue confirmada manualmente por el desarrollador. No se ejecutó la nueva subida ni se verificaron reglas HTTP en el hosting durante esta modificación; esas pruebas quedan pendientes para obtener las capturas académicas.
 
 ## Acuse de recepción por SMTP
 
