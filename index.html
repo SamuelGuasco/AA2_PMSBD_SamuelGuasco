@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Configuro la codificación, la visualización en dispositivos y el título de la página. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechMindSolutions | Soluciones digitales</title>
+    <!-- Enlazo la hoja de estilos para definir la presentación del sitio. -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Presento la identidad con el logotipo, que ya incluye el nombre de la empresa. -->
+    <header>
+        <img src="images/logo/logo-techminds.png" alt="Logotipo de TechMindSolutions" width="200">
+    </header>
+
+    <!-- Facilito el acceso a cada sección mediante enlaces internos. -->
+    <nav aria-label="Navegación principal">
+        <a href="#inicio">Inicio</a>
+        <a href="#empresa">Empresa</a>
+        <a href="#productos">Productos</a>
+        <a href="#oferta-del-mes">Oferta del mes</a>
+        <a href="#localizacion">Localización</a>
+        <a href="#contacto">Contacto</a>
+        <a href="#noticias">Noticias</a>
+    </nav>
+
+    <!-- Organizo el contenido principal en secciones relacionadas con el menú. -->
+    <main>
+        <!-- Doy la bienvenida y presento el eslogan de la empresa. -->
+        <section id="inicio">
+            <p class="eslogan">Conectamos ideas, impulsamos tu futuro digital.</p>
+            <h1>Soluciones digitales para hacer crecer tu negocio.</h1>
+            <p class="descripcion">Impulsa tu presencia en internet con desarrollo web, comparte tus datos con tarjetas digitales NFC y gestiona tus relaciones con clientes con ClozerIA CRM.</p>
+            <!-- Dirijo al visitante hacia los productos y servicios de la empresa. -->
+            <a class="boton" href="#productos">Conoce nuestras soluciones</a>
+        </section>
+
+        <!-- Explico las actividades principales de la empresa. -->
+        <section id="empresa">
+            <h2>Empresa</h2>
+            <p>TechMindSolutions es un negocio de tecnología digital que ofrece soluciones prácticas para empresas y emprendedores.</p>
+            <p>Desarrollamos sitios web para presentar negocios en internet, ofrecemos tarjetas digitales NFC para compartir datos de contacto y presentamos ClozerIA CRM, distribuido por Estrategia10X, para organizar las relaciones con clientes.</p>
+            <p>Nos comprometemos a acompañar la transformación digital con herramientas que faciliten la comunicación, la presencia en línea y la organización comercial de cada negocio.</p>
+
+            <!-- Presento un horario de ejemplo y aclaro que debo confirmarlo antes de publicarlo como definitivo. -->
+            <div class="horario">
+                <h3>Horario de atención</h3>
+                <p><strong>Horario provisional de ejemplo, pendiente de confirmación.</strong></p>
+                <p>Lunes a viernes: 09:00 a 18:00.</p>
+                <p>Sábados y domingos: sin atención en este horario de ejemplo.</p>
+            </div>
+        </section>
+
+        <!-- Presento los productos y servicios de la empresa. -->
+        <section id="productos">
+            <h2>Productos</h2>
+            <p>Conoce nuestras tres soluciones para la presencia digital y la organización de tu negocio.</p>
+
+            <!-- Agrupo los servicios y utilizo un artículo independiente para describir cada uno. -->
+            <div class="catalogo-servicios">
+                <article class="tarjeta-servicio">
+                    <h3>Desarrollo de sitios web</h3>
+                    <p>Creamos espacios digitales para comunicar lo que ofrece tu negocio y facilitar el contacto con sus visitantes.</p>
+                    <!-- Enumero tres características para facilitar la comparación de los servicios. -->
+                    <ul>
+                        <li>Sitios web corporativos.</li>
+                        <li>Páginas de destino para campañas.</li>
+                        <li>Diseño web adaptable a distintos dispositivos.</li>
+                    </ul>
+                    <!-- Asocio el botón con los detalles exclusivos de este servicio, ocultos mediante CSS. -->
+                    <button class="boton-detalles" type="button" aria-expanded="false" aria-controls="detalles-web">Ver más información</button>
+                    <div id="detalles-web" class="detalles-servicio">
+                        <p>El contenido y la estructura del sitio se definen según los objetivos del negocio y la información que necesitan sus visitantes.</p>
+                    </div>
+                </article>
+
+                <article class="tarjeta-servicio">
+                    <h3>Tarjetas digitales NFC</h3>
+                    <p>Facilitamos la presentación profesional y el intercambio de datos de contacto mediante tecnología NFC.</p>
+                    <ul>
+                        <li>Perfiles digitales de contacto.</li>
+                        <li>Intercambio de contacto mediante NFC.</li>
+                        <li>Credenciales digitales personalizadas.</li>
+                    </ul>
+                    <button class="boton-detalles" type="button" aria-expanded="false" aria-controls="detalles-nfc">Ver más información</button>
+                    <div id="detalles-nfc" class="detalles-servicio">
+                        <p>El perfil digital reúne los datos que deseas compartir. Para acceder mediante una tarjeta NFC, el teléfono debe ser compatible con esta tecnología.</p>
+                    </div>
+                </article>
+
+                <article class="tarjeta-servicio">
+                    <h3>ClozerIA CRM</h3>
+                    <p>Una solución para organizar la actividad comercial y dar seguimiento a los clientes, distribuida por Estrategia10X.</p>
+                    <ul>
+                        <li>Gestión de relaciones con clientes.</li>
+                        <li>Seguimiento de oportunidades comerciales.</li>
+                        <li>Organización de información de clientes.</li>
+                    </ul>
+                    <button class="boton-detalles" type="button" aria-expanded="false" aria-controls="detalles-crm">Ver más información</button>
+                    <div id="detalles-crm" class="detalles-servicio">
+                        <p>ClozerIA CRM, distribuido por Estrategia10X, permite reunir el contexto de las relaciones comerciales para facilitar la planificación de próximas acciones.</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Destaco el servicio del mes sin inventar precios ni condiciones comerciales. -->
+        <section id="oferta-del-mes">
+            <h2>Oferta del mes</h2>
+            <h3>Este mes, impulsa tu presencia con un sitio web profesional</h3>
+            <p>Destacamos nuestro servicio de diseño y desarrollo web para presentar tu negocio con información clara y una experiencia adaptable a distintos dispositivos.</p>
+            <ul class="beneficios">
+                <li>Presenta tus productos y servicios en un espacio propio.</li>
+                <li>Facilita que las personas conozcan tu negocio y sus canales de contacto.</li>
+                <li>Organiza la información de tu empresa para que sea fácil de consultar.</li>
+            </ul>
+            <a class="boton" href="#contacto">Consulta sobre tu sitio web</a>
+        </section>
+
+        <!-- Explico la atención digital y dejo la dirección física pendiente de confirmación. -->
+        <section id="localizacion">
+            <h2>Localización</h2>
+            <p>TechMindSolutions ofrece servicios digitales para empresas y emprendedores. Podemos conversar en línea sobre las necesidades de tu proyecto y las soluciones disponibles.</p>
+            <div class="direccion-pendiente">
+                <h3>Dirección física</h3>
+                <p>Dirección del negocio: pendiente de confirmación.</p>
+            </div>
+            <p>Las consultas en línea forman parte de nuestra modalidad de atención. Los canales para coordinarlas están pendientes de publicación.</p>
+        </section>
+
+        <!-- Estructuro un formulario accesible y relaciono cada etiqueta con su campo. -->
+        <section id="contacto">
+            <h2>Contacto</h2>
+            <p id="aviso-formulario">Completa el siguiente formulario para ponerte en contacto con nosotros.</p>
+            <p>Todos los campos marcados con * son obligatorios.</p>
+            <form id="formulario-contacto" aria-describedby="aviso-formulario">
+                <div class="fila-formulario">
+                    <div class="campo-formulario">
+                        <label for="nombre">Nombre completo *</label>
+                        <!-- Uso name para identificar el dato como en Contacto, required para exigirlo y maxlength para respetar su límite de 100 caracteres. -->
+                        <input type="text" id="nombre" name="nombre" autocomplete="name" maxlength="100" required>
+                    </div>
+                    <div class="campo-formulario">
+                        <label for="correo">Correo electrónico *</label>
+                        <!-- Uso name="email" como en Contacto, type="email" para comprobar el formato y maxlength para limitarlo a 150 caracteres. -->
+                        <!-- Mantengo required y autocomplete para exigir el correo y facilitar su escritura. -->
+                        <input type="email" id="correo" name="email" autocomplete="email" maxlength="150" required>
+                    </div>
+                </div>
+                <div class="campo-formulario">
+                    <label for="mensaje">Mensaje *</label>
+                    <!-- Identifico el mensaje con name, exijo su presencia con required y uso rows para conservar su altura inicial. -->
+                    <textarea id="mensaje" name="mensaje" rows="5" required></textarea>
+                </div>
+                <!-- Mantengo el botón deshabilitado hasta que JavaScript controle el evento submit. -->
+                <button id="boton-guardar" class="boton" type="submit" disabled>Guardar</button>
+            </form>
+            <!-- Muestro el resultado debajo del formulario y permito que los lectores de pantalla lo anuncien. -->
+            <p id="resultado-formulario" role="status" aria-live="polite" aria-atomic="true"></p>
+        </section>
+
+        <!-- Comparto tres artículos educativos sin atribuirles fechas ni anuncios empresariales. -->
+        <section id="noticias">
+            <h2>Noticias</h2>
+            <p>Ideas para comprender las herramientas digitales que pueden apoyar a tu negocio.</p>
+            <div class="articulos-noticias">
+                <article>
+                    <h3>El valor de un sitio web profesional</h3>
+                    <p>Un sitio web reúne la información de una empresa en un espacio propio. Una estructura clara y un diseño adaptable ayudan a los visitantes a conocer sus servicios y encontrar cómo ponerse en contacto.</p>
+                </article>
+                <article>
+                    <h3>Comparte tus datos con tecnología NFC</h3>
+                    <p>La tecnología NFC permite acceder a un perfil digital al acercar una tarjeta a un teléfono compatible con NFC. Así, una persona puede consultar los datos de contacto sin tener que escribirlos manualmente.</p>
+                </article>
+                <article>
+                    <h3>Organiza la atención con un CRM</h3>
+                    <p>Un sistema de gestión de relaciones con clientes centraliza información y facilita el seguimiento de oportunidades comerciales. Mantener los datos organizados ayuda a dar continuidad a las conversaciones y planificar próximas acciones.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <!-- Cierro la página con información básica de la empresa y el contexto académico. -->
+    <footer>
+        <p>TechMindSolutions | Desarrollo web, tarjetas digitales NFC y ClozerIA CRM.</p>
+        <p>Proyecto académico de Ingeniería de Software de la Universidad Internacional del Ecuador (UIDE).</p>
+    </footer>
+    <!-- Cargo el código después del HTML para poder acceder a los elementos del formulario. -->
+    <script src="js/script.js"></script>
+    <!-- Cargo primero jQuery desde su CDN oficial y después mi código para los servicios. -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="js/jquery-servicios.js"></script>
+</body>
+</html>
