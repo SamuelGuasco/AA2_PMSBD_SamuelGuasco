@@ -1,0 +1,74 @@
+/* Limito mis reglas a la nueva página para conservar la presentación del sitio existente. */
+.pagina-clima nav a[aria-current="page"] {
+    color: #062D36;
+    text-decoration: underline;
+    text-decoration-color: #008F9B;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 6px;
+}
+
+.reporte-clima {
+    padding: 48px 0;
+    text-align: center;
+}
+
+.reporte-clima h1 {
+    margin: 0 auto 12px;
+    font-size: clamp(2rem, 5vw, 2.75rem);
+}
+
+.reporte-clima .clima-subtitulo {
+    margin: 0 auto 32px;
+    color: #49616A;
+}
+
+.clima-tarjeta {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 32px;
+    border: 1px solid #E2EAED;
+    border-radius: 4px;
+    background-color: #F7FAFB;
+    overflow-wrap: anywhere;
+}
+
+.clima-tarjeta h2 { margin-bottom: 0; }
+.clima-tarjeta p { margin: 12px 0; }
+.clima-tarjeta .clima-temperatura {
+    margin: 0;
+    font-size: clamp(2.5rem, 10vw, 4rem);
+    font-weight: bold;
+    line-height: 1.2;
+}
+.clima-descripcion { color: #49616A; }
+
+/* Distribuyo las medidas en columnas iguales y permito que el contenido se ajuste. */
+.clima-medidas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+}
+.clima-medidas div {
+    padding: 16px 8px;
+    background: #FFFFFF;
+    border: 1px solid #E2EAED;
+    border-radius: 4px;
+}
+.clima-medidas dt { color: #49616A; }
+.clima-medidas dd { margin: 8px 0 0; font-size: 1.25rem; font-weight: bold; }
+.clima-tarjeta button { border: 0; font: inherit; font-weight: bold; cursor: pointer; max-width: 100%; }
+.clima-tarjeta button:disabled { background: #E2EAED; color: #49616A; cursor: wait; }
+.pagina-clima :focus-visible { outline: 3px solid #062D36; outline-offset: 4px; }
+.clima-tarjeta .clima-fuente { margin-top: 20px; font-size: 0.875rem; color: #49616A; }
+.clima-fuente a { color: #062D36; }
+
+/* Reduzco espacios en móviles y apilo las medidas en pantallas muy estrechas o con zoom. */
+@media (max-width: 700px) {
+    .reporte-clima { padding: 32px 0; }
+    .clima-tarjeta { padding: 24px 16px; }
+}
+@media (max-width: 360px) {
+    .clima-medidas { grid-template-columns: 1fr; }
+}

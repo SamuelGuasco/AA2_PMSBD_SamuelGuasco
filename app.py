@@ -8,6 +8,7 @@ from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 
 from conexion import obtener_conexion
 from correo import enviar_acuse
+from clima import ErrorClima, obtener_clima
 
 
 RAIZ = Path(__file__).resolve().parent
@@ -22,6 +23,12 @@ FORMATO_EMAIL = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
 def inicio():
     # Uso GET para consultar la página sin modificar información.
     return send_from_directory(RAIZ, "index.html")
+
+
+@app.get("/clima")
+def pagina_clima():
+    # Sirvo la página del reportero sin cambiar la consulta meteorológica validada.
+    return send_from_directory(RAIZ, "clima.html")
 
 
 @app.get("/css/<path:archivo>")
@@ -43,6 +50,16 @@ def imagenes(archivo):
 @app.errorhandler(RequestEntityTooLarge)
 def solicitud_demasiado_grande(error):
     return jsonify(ok=False, mensaje="El contenido enviado es demasiado grande."), 413
+
+
+@app.get("/api/clima")
+def consultar_clima():
+    # Separo la consulta externa de la ruta para probarla sin depender de internet.
+    # Devuelvo solamente los campos normalizados; nunca registro la URL con mi clave.
+    try:
+        return jsonify(ok=True, clima=obtener_clima())
+    except ErrorClima as error:
+        return jsonify(ok=False, mensaje=str(error)), error.estado
 
 
 @app.post("/api/contacto")

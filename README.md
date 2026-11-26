@@ -6,7 +6,7 @@ Proyecto de **Aprendizaje Autónomo 2 (AA2)** de la asignatura **Programación d
 
 TechMindSolutions es un concepto de emprendimiento digital para empresas y emprendedores. Presenta desarrollo de sitios web, tarjetas digitales NFC y ClozerIA CRM, distribuido por Estrategia10X. El sitio describe estas soluciones; no implementa un CRM ni lectura NFC.
 
-Conservo las secciones **Inicio, Empresa, Productos, Oferta del mes, Localización, Contacto y Noticias**, la navegación interna, el logotipo y el diseño adaptable. El horario es provisional y la dirección física está pendiente de confirmación. El formulario permite guardar contactos mediante Flask.
+Conservo las secciones **Inicio, Empresa, Productos, Oferta del mes, Localización, Contacto y Noticias**, e incorporo **Clima** en el menú antes de Contacto. Mantengo el logotipo y el diseño adaptable. El horario es provisional y la dirección física está pendiente de confirmación. El formulario permite guardar contactos mediante Flask y el reportero consulta datos meteorológicos reales mediante el middleware.
 
 ## Objetivos
 
@@ -26,6 +26,7 @@ Conservo las secciones **Inicio, Empresa, Productos, Oferta del mes, Localizaci�
 | jQuery 3.7.1 | Eventos y animación `slideToggle` de los detalles de servicios. |
 | Python | Lógica del middleware, recursos y excepciones. |
 | Flask | Publicación del sitio y endpoint de contacto. |
+| urllib, json y unittest | Consulta meteorológica HTTPS, normalización y pruebas reproducibles sin dependencias nuevas. |
 | pyodbc | Acceso a SQL Server mediante ODBC y consultas parametrizadas. |
 | python-dotenv | Carga de configuración desde variables de entorno y `.env`. |
 | smtplib, ssl y EmailMessage | Acuse de recepción por SMTP con SSL/TLS; bibliotecas estándar de Python. |
@@ -61,6 +62,10 @@ TechMindSolutions_AA2/
 ├── app.py
 ├── conexion.py
 ├── correo.py
+├── clima.py
+├── tests/
+│   ├── test_clima.py
+│   └── test_clima_frontend.cjs
 ├── subir_ftp.py
 ├── .env                 # Configuración local, excluida de Git
 ├── .env.example         # Plantilla compartida
@@ -68,11 +73,14 @@ TechMindSolutions_AA2/
 ├── requirements.txt
 ├── README.md
 ├── index.html
+├── clima.html
 ├── css/
-│   └── styles.css
+│   ├── styles.css
+│   └── clima.css
 ├── js/
 │   ├── script.js
-│   └── jquery-servicios.js
+│   ├── jquery-servicios.js
+│   └── clima.js
 ├── images/
 │   └── logo/
 │       └── logo-techminds.png
@@ -87,6 +95,12 @@ TechMindSolutions_AA2/
 | `app.py` | Rutas Flask, validación, inserción, transacciones y respuestas HTTP. |
 | `conexion.py` | Carga de variables y apertura de conexiones con autenticación de Windows. |
 | `correo.py` | Entrega del acuse personalizado mediante SMTP_SSL, independiente de la transacción SQL. |
+| `clima.py` | Consulta OpenWeatherMap con urllib, valida la respuesta y normaliza el clima. |
+| `tests/test_clima.py` | Pruebas del módulo y la ruta Flask con respuestas simuladas. |
+| `tests/test_clima_frontend.cjs` | Pruebas JavaScript con DOM y red simulados, mediante Node.js. |
+| `clima.html` | Página del reportero meteorológico con navegación y estados accesibles. |
+| `css/clima.css` | Diseño adaptable del reportero, separado de los estilos existentes. |
+| `js/clima.js` | Consulta asíncrona a Flask, validación de JSON y actualización segura del DOM. |
 | `subir_ftp.py` | Prueba de conexión y copia controlada de fuentes por FTPS explícito. |
 | `index.html` | Contenido y formulario con etiquetas visibles y región de estado accesible. |
 | `css/styles.css` | Colores, tipografía y distribución; ancho máximo de 1120 px y ajustes para pantallas de hasta 700 px. |
@@ -218,10 +232,92 @@ Las respuestas controladas de error contienen `ok: false` y `mensaje`. No hay un
 - **Excepciones:** envío errores comprensibles al navegador y registro detalles técnicos en el servidor para diagnóstico.
 - **Archivos públicos limitados:** publico la página y las carpetas de recursos; no hay rutas para descargar `.env`, Python ni SQL.
 - **Mensajes seguros en el DOM:** utilizo `textContent` para no interpretar las respuestas como HTML.
-- **Exclusiones de Git:** `.gitignore` excluye `.env`, `.env.*`, `.venv/`, `__pycache__/`, archivos compilados de Python, `.vscode/` y `*.log`. La excepción `!.env.example` permite compartir la plantilla. Estas reglas no eliminan archivos que ya estuvieran versionados.
+- **Exclusiones de Git:** `.gitignore` excluye `.env`, `.env.*`, `.venv/`, `__pycache__/`, archivos compilados de Python, `.vscode/`, `.idea/`, `*.log`, `*.tmp`, `*.bak`, `Thumbs.db` y `.DS_Store`. La excepción `!.env.example` permite compartir la plantilla. Estas reglas no eliminan archivos que ya estuvieran versionados.
 - **Desarrollo local:** servidor limitado a localhost y depurador desactivado. `TrustServerCertificate=yes` omite la validación del certificado SQL Server para este entorno académico; no configura HTTPS en Flask.
 
-Estas medidas no garantizan seguridad completa ni preparación para producción. El bloqueo del formulario no garantiza evitar duplicados al reintentar después de perder una respuesta. No se ha implementado la API meteorológica.
+Estas medidas no garantizan seguridad completa ni preparación para producción. El bloqueo del formulario no garantiza evitar duplicados al reintentar después de perder una respuesta. La API meteorológica conserva sus credenciales exclusivamente en el backend y ofrece una interfaz de consulta en `/clima`, como documento a continuación.
+
+## Paso 2: reportero meteorológico — GET /api/clima
+
+Implemento `app.py → clima.py → HTTPS → OpenWeatherMap Current Weather Data`, mediante `https://api.openweathermap.org/data/2.5/weather`. Separo la consulta externa de Flask para verificar la normalización y los errores de forma reproducible. Conservo el formulario, SQL Server, SMTP y FTPS. Esta ruta no abre conexiones SQL ni envía correos.
+
+Leo estas variables desde el entorno o el `.env` existente, sin sobrescribirlo ni reemplazar las variables del proceso:
+
+```dotenv
+OPENWEATHER_API_KEY=REEMPLAZAR_CON_MI_CLAVE
+OPENWEATHER_CITY=Quito,EC
+OPENWEATHER_UNITS=metric
+OPENWEATHER_LANG=es
+```
+
+Los valores anteriores son ejemplos públicos; guardo la clave real únicamente en mi configuración local. Exijo clave y ciudad no vacías. Acepto `metric`, `standard` e `imperial`; si omito unidades utilizo `metric`. Exijo `es` para solicitar la descripción en español; si omito el idioma utilizo `es`. Una configuración incompatible recibe HTTP 503 antes de consultar internet.
+
+Uso `urllib.request`, `urlencode` y `json` de la biblioteca estándar; no agrego dependencias. Verifico TLS con la configuración predeterminada y rechazo redirecciones para proteger la clave. Establezco un timeout de 10 segundos para operaciones de red, que no representa un plazo global estricto de toda la solicitud. Limito la lectura a 1 MiB, valido campos obligatorios, tipos, números finitos, humedad, viento e icono y cierro la respuesta con un administrador de contexto. No publico ni registro la URL autenticada, los cuerpos de error externos ni los detalles de sus excepciones.
+
+Mi contrato JSON satisfactorio es HTTP 200 con esta estructura ilustrativa; los valores reales varían:
+
+```json
+{
+  "ok": true,
+  "clima": {
+    "ciudad": "Quito",
+    "pais": "EC",
+    "temperatura_c": 18.5,
+    "humedad": 72,
+    "descripcion": "lluvia ligera",
+    "viento_kmh": 9.0,
+    "icono": "10d"
+  }
+}
+```
+
+Devuelvo el país como código del proveedor, humedad como porcentaje e icono como código, sin descargar imágenes. Convierto m/s a km/h multiplicando por 3,6 para `metric` y `standard`; para `imperial` convierto mph a km/h multiplicando por 1,609344. Convierto Kelvin o Fahrenheit a Celsius cuando corresponde y redondeo temperatura y viento a dos decimales. Solicito `lang=es` al proveedor, sin intentar traducir localmente sus descripciones.
+
+Sigo los parámetros y unidades de la [documentación oficial de OpenWeatherMap](https://openweathermap.org/api/current). Utilizo la consulta por ciudad solicitada para esta actividad; el proveedor indica que su geocodificador integrado está obsoleto, aunque sigue disponible.
+
+| Situación | HTTP de mi endpoint |
+|---|---|
+| Autenticación rechazada por el proveedor (401) | 502; la clave pertenece al backend, no al visitante. |
+| Ciudad no encontrada (404) | 404. |
+| Límite de consultas del proveedor (429) | 429. |
+| Fallo 5xx del proveedor | 503. |
+| Fallo de conexión, DNS o TLS | 503. |
+| Timeout de conexión o lectura | 504. |
+| JSON, estructura o datos inválidos; redirección u otro estado inesperado | 502. |
+| Configuración local inválida | 503. |
+
+En todos los errores controlados devuelvo `{"ok": false, "mensaje": "…"}` con texto seguro. No realizo reintentos automáticos para no aumentar el consumo de la cuota. Cada GET consulta al proveedor; no implemento caché. La interfaz consulta al abrirse y cuando el visitante pulsa el botón de actualización, sin consultas periódicas.
+
+### Validación local del clima
+
+Desde la raíz del proyecto ejecuto las pruebas reproducibles, sin llamadas reales, con `unittest` y `unittest.mock`:
+
+```powershell
+.\.venv\Scripts\python.exe -B -m unittest discover -s tests -v
+```
+
+Verifico éxito y contrato JSON, parámetros HTTPS, cierre de respuesta, timeout configurado, conversiones, errores HTTP, conexiones fallidas, timeout directo y envuelto, JSON inválido, UTF-8 inválido, datos incompletos o incoherentes, exceso de tamaño, configuración inválida, rechazo de redirecciones y método POST. Uso una clave ficticia en las excepciones simuladas para comprobar que no aparezca en las respuestas. También compruebo que GET no invoque SQL ni SMTP.
+
+Conservo el `.env` que ya funciona e inicio el servidor:
+
+```powershell
+.\.venv\Scripts\python.exe -B .\app.py
+```
+
+En una segunda terminal PowerShell consulto el endpoint local:
+
+```powershell
+curl.exe -i http://127.0.0.1:5000/api/clima
+Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:5000/api/clima' | ConvertTo-Json -Depth 3
+```
+
+Cada comando anterior realiza una consulta real y consume cuota. Para validar la integración Flask sin iniciar un proceso servidor utilizo alternativamente:
+
+```powershell
+.\.venv\Scripts\python.exe -B -c "from app import app; import json; r = app.test_client().get('/api/clima'); print('HTTP', r.status_code); print(json.dumps(r.get_json(), ensure_ascii=False)); raise SystemExit(0 if r.status_code == 200 else 1)"
+```
+
+En la validación inicial del backend ejecuté las siete pruebas automatizadas satisfactoriamente y comprobé la integración con el cliente de pruebas Flask y el proveedor real: recibí HTTP 200, ciudad Quito, país EC y descripción en español. Posteriormente confirmé el funcionamiento de la interfaz en el navegador, la actualización manual y la recuperación del servicio, como registro en las pruebas realizadas. Mantengo la clave fuera de las fuentes y esta actualización documental no modifica `.env` ni realiza commits, subidas o despliegues.
 
 ## Transferencia académica a Hostinger mediante FTPS
 
@@ -255,9 +351,13 @@ Los testigos y `.htaccess` permanecen para evidenciar el control; el script no e
 
 Muestro cada archivo confirmado y un resumen con cantidad y bytes, incluidos los controles de protección. Esta verificación refleja el estado observado antes de transferir y depende de que el hosting conserve sus reglas. Conviene comprobar después que las URLs de las fuentes reales siguen devolviendo 403 y repetir la revisión tras cambios de configuración.
 
-La copia no ejecuta Flask ni configura Python en Hostinger: el formulario conserva su endpoint relativo, que requiere un backend Flask desplegado por separado para funcionar allí. SQL Server continúa siendo local. Esta tarea no cambia el frontend ni configura ese despliegue.
+### Alcance del hosting y del entorno local
 
-La conexión FTPS fue confirmada manualmente por el desarrollador. No se ejecutó la nueva subida ni se verificaron reglas HTTP en el hosting durante esta modificación; esas pruebas quedan pendientes para obtener las capturas académicas.
+FTPS transfiere archivos, pero no ejecuta Flask ni configura Python en Hostinger. SQL Server y el backend Flask operan en el entorno de desarrollo local. El frontend estático transferido es accesible públicamente; esa accesibilidad no demuestra que las rutas dinámicas estén desplegadas en el hosting.
+
+El formulario requiere `/api/contacto` y el reportero requiere `/api/clima`, atendidos por Flask. El reportero funciona localmente en **http://127.0.0.1:5000/clima**. El script FTP existente no despliega el reportero: su lista permitida no incluye `clima.py`, `clima.html`, `css/clima.css` ni `js/clima.js`. Además, las rutas absolutas de la página requieren Flask o una configuración equivalente; una copia estática en una subcarpeta de Hostinger no habilita estas funciones.
+
+Confirmé manualmente la conexión FTPS autenticada y cifrada con Python `ftplib`, la transferencia de archivos a Hostinger y la accesibilidad pública del frontend. Estos resultados corresponden a las validaciones académicas realizadas; esta actualización documental no repite transferencias ni altera el hosting.
 
 ## Acuse de recepción por SMTP
 
@@ -268,12 +368,12 @@ Configuro estas variables en `.env`, utilizando `.env.example` como referencia y
 ```dotenv
 SMTP_HOST=smtp.hostinger.com
 SMTP_PORT=465
-SMTP_USER=info@tech-mindsolutions.com
+SMTP_USER=usuario@example.com
 SMTP_PASSWORD=
 SMTP_USE_SSL=true
 ```
 
-Introduzco manualmente la contraseña del buzón únicamente en `.env` y reinicio Flask tras cambiarla. La contraseña se entrega vacía y no se debe incorporar a Git, capturas, registros ni respuestas HTTP. `.env` permanece excluido por `.gitignore`. Las variables del proceso tienen prioridad sobre el archivo local.
+Sustituyo `usuario@example.com` por el usuario real únicamente en mi configuración local. Introduzco manualmente la contraseña del buzón únicamente en `.env` y reinicio Flask tras cambiarla. La contraseña se entrega vacía y no se debe incorporar a Git, capturas, registros ni respuestas HTTP. `.env` permanece excluido por `.gitignore`. Las variables del proceso tienen prioridad sobre el archivo local.
 
 Utilizo las bibliotecas estándar `smtplib`, `ssl` y `email.message.EmailMessage`, sin añadir dependencias. `SMTP_SSL` establece SSL/TLS desde el inicio en el puerto 465, con `ssl.create_default_context()` para verificar certificados y un timeout de 10 segundos. No desactivo la verificación TLS ni habilito depuración SMTP. Las excepciones se convierten en un resultado controlado sin registrar sus detalles, que podrían contener información sensible.
 
@@ -292,14 +392,11 @@ Equipo de TechMindSolutions
 
 Si falta la contraseña o la configuración es inválida, no intento la conexión SMTP y devuelvo `correo_enviado: false`. Cuando el servidor acepta el correo, devuelvo `correo_enviado: true`; esa aceptación no garantiza su llegada a la bandeja de entrada. Un fallo SMTP mantiene HTTP `201` y `ok: true` porque el registro ya se guardó. No ejecuto rollback ni reintentos automáticos por un fallo del correo.
 
-### Prueba manual del acuse pendiente
+### Validación manual del acuse y alcance de la entrega
 
-No se han enviado correos reales durante esta implementación. Para probar posteriormente:
+Verifiqué manualmente la recepción del correo automático de confirmación en el buzón de Hostinger después de registrar un contacto. Repetí la comprobación en la regresión final y confirmé tanto la persistencia en SQL Server local como la recepción del acuse en Hostinger. El buzón remoto recibe el correo enviado por el backend local; esto no implica que Flask o SQL Server se ejecuten en Hostinger.
 
-1. Con `SMTP_PASSWORD` vacío, inicio Flask y envío un contacto con una dirección propia. Compruebo el guardado en SQL Server y el aviso de que no se pudo enviar el acuse. Esta prueba crea un contacto real, pero no intenta SMTP.
-2. Introduzco la contraseña válida en `.env`, reinicio Flask y envío otro contacto a un buzón controlado por mí. Compruebo el guardado, `correo_enviado: true` y la recepción del asunto y cuerpo personalizados, incluida la carpeta de correo no deseado.
-3. Para comprobar un fallo de autenticación, uso temporalmente una clave incorrecta, reinicio Flask y envío un nuevo contacto. Verifico que el registro permanezca, que se muestre el aviso de fallo del acuse y que la respuesta no incluya detalles técnicos ni credenciales. Restauro después la configuración correcta.
-4. Compruebo que una solicitud inválida reciba HTTP `400`, sin insertar un contacto ni intentar enviar un correo.
+La entrega a destinatarios externos de Gmail no quedó confirmada de forma concluyente. Distingo la aceptación SMTP de la recepción efectiva: la recepción comprobada corresponde al buzón de Hostinger y no permite afirmar entrega universal a otros proveedores.
 
 La entrega es síncrona: el formulario permanece bloqueado mientras espera el resultado SMTP. No debo reenviar un contacto ya guardado únicamente porque falle su acuse.
 
@@ -307,7 +404,9 @@ La entrega es síncrona: el formulario permanece bloqueado mientras espera el re
 
 ### Pruebas manuales completadas
 
-Registro los siguientes resultados satisfactorios conforme a las pruebas manuales informadas por el desarrollador para esta etapa. No se repitieron durante la actualización de este documento.
+Registro los siguientes resultados satisfactorios conforme a las validaciones manuales confirmadas por el desarrollador para el proyecto terminado. No se repitieron durante esta actualización documental.
+
+#### Paso 1: formulario, persistencia, correo y transferencia
 
 | Prueba | Resultado observado |
 |---|---|
@@ -316,16 +415,78 @@ Registro los siguientes resultados satisfactorios conforme a las pruebas manuale
 | Correo de formato inválido | La validación rechazó la dirección incorrecta. |
 | Solicitud HTTP directa con datos inválidos | El servidor devolvió HTTP `400`. |
 | Intento de inyección SQL | La expresión enviada se almacenó como texto literal y los registros anteriores permanecieron intactos. |
+| Correo automático de confirmación | Se recibió satisfactoriamente en el buzón de Hostinger. |
+| Conexión FTPS con Python `ftplib` | Autenticación y conexión cifrada satisfactorias. |
+| Transferencia a Hostinger | Los archivos se transfirieron correctamente al entorno de hosting. |
+| Acceso público al frontend | Se verificó la accesibilidad del sitio estático publicado. |
 
 La prueba de inyección verifica el comportamiento de la inserción evaluada; no constituye una auditoría completa de seguridad. No incluyo datos personales de los contactos utilizados.
+
+#### Paso 2: consulta e interfaz meteorológica
+
+| Prueba | Resultado observado |
+|---|---|
+| Cuenta y configuración de OpenWeatherMap | Configuración completada; la clave funcional denominada Default se administra mediante `.env`, sin publicarla. |
+| Solicitudes HTTPS al proveedor | Respuestas satisfactorias con datos meteorológicos reales. |
+| Middleware Flask y `GET /api/clima` | Integración validada y respuesta JSON normalizada correcta. |
+| Navegación | Reportero integrado mediante el enlace Clima antes de Contacto. |
+| Presentación de datos | Temperatura, humedad, descripción meteorológica y velocidad del viento mostradas correctamente. |
+| Actualización manual | Funcionamiento validado mediante Chrome DevTools. |
+| Visualización adaptable | Verificada manualmente en distintos tamaños de pantalla. |
+| Error de red | Manejo comprobado al detener Flask. |
+| Recuperación del servicio | Consulta restablecida satisfactoriamente después de reiniciar Flask. |
+| Regresión final del formulario | Se confirmó nuevamente la persistencia en SQL Server local y la entrega de la confirmación SMTP al buzón de Hostinger. |
+
+### Resultados de las pruebas automatizadas
+
+Documento los resultados de la auditoría final, obtenidos con respuestas simuladas y sin operaciones reales SQL, SMTP o FTP:
+
+| Conjunto | Resultado |
+|---|---|
+| Python: `tests/test_clima.py` | **7/7 satisfactorias**. |
+| JavaScript: `tests/test_clima_frontend.cjs` | **4/4 satisfactorias**. |
+| Total | **11/11 satisfactorias**. |
+
+Estos resultados complementan las validaciones manuales y no se presentan como pruebas de despliegue del backend en Hostinger.
 
 ### Comprobaciones no destructivas de la implementación
 
 Durante la implementación se comprobaron sintaxis Python y JavaScript, configuración, rutas públicas y rechazo del acceso a archivos privados. Se probaron validación, confirmación, reversión y cierre de recursos con conexiones simuladas, además de los estados de éxito y error y el bloqueo de envíos simultáneos en JavaScript. Estas comprobaciones no abrieron conexiones reales ni insertaron registros y se distinguen de las pruebas manuales anteriores.
 
-### Recomendaciones adicionales pendientes
+### Posibles ampliaciones de las pruebas
 
-Recomiendo ampliar las pruebas manuales a límites de longitud, caracteres Unicode, indisponibilidad de SQL Server, pérdida de conexión y solicitudes que excedan el tamaño permitido. También conviene revisar el formulario en distintos tamaños de pantalla y comprobar las interacciones jQuery. Estas recomendaciones no se presentan como pruebas manuales completadas.
+Como ampliación futura, puedo profundizar las pruebas de límites de longitud, caracteres Unicode, indisponibilidad de SQL Server y solicitudes que excedan el tamaño permitido. Estas propuestas no invalidan las verificaciones ya completadas de visualización adaptable, error de red y recuperación del servicio meteorológico.
+
+## Interfaz del reportero meteorológico
+
+Creo `clima.html`, accesible mediante **http://127.0.0.1:5000/clima**, y agrego «Clima» inmediatamente antes de «Contacto» en la navegación compartida por escritorio y móviles. Desde esta página los demás enlaces regresan a las secciones de la página principal. Marco el enlace activo mediante `aria-current="page"`. Reutilizo el encabezado, el logotipo, el pie, la tipografía y la paleta existentes; limito mis reglas nuevas a `css/clima.css`.
+
+Presento una tarjeta centrada con ciudad, país, icono, temperatura en °C, descripción, humedad y velocidad del viento. Distribuyo las medidas en dos bloques equilibrados y las apilo en pantallas muy estrechas. Uso HTML semántico, una lista descriptiva para las medidas, foco visible, texto alternativo y una región de estado accesible. No incluyo datos meteorológicos ficticios en la página.
+
+Implemento `js/clima.js` con `fetch('/api/clima')` y `async/await`: consulto al abrir la página y al pulsar **Actualizar clima**. El navegador habla con Flask; solamente el backend consulta la API autenticada. La clave permanece en el entorno del servidor y nunca se incorpora al HTML ni al JavaScript. La descarga del icono utiliza una URL HTTPS pública de OpenWeatherMap y un código validado con una lista de formatos permitidos.
+
+Compruebo el estado HTTP, el indicador `ok` y los campos JSON antes de actualizar el DOM. Uso `textContent` para el texto externo, `Intl.NumberFormat('es-EC')` para los números y «Ecuador» cuando el código recibido es `EC`. Deshabilito el botón durante la consulta, evito solicitudes simultáneas y cancelo la espera del navegador tras 15 segundos. Anuncio carga, éxito y errores sin mover el foco. Ante un error oculto el panel para no presentar una observación anterior como actual y permito reintentar. Si falla la imagen, mantengo la descripción meteorológica textual.
+
+### Pruebas locales de la interfaz
+
+Desde la raíz del proyecto inicio Flask:
+
+```powershell
+.\.venv\Scripts\python.exe -B .\app.py
+```
+
+Abro **http://127.0.0.1:5000/clima** mediante Flask; abrir el archivo HTML directamente no ofrece el endpoint relativo. Necesito conexión a internet y la configuración `.env` ya validada. Cada carga y actualización consulta al proveedor y consume cuota. No modifico `.env` ni necesito credenciales en el navegador.
+
+Compruebo que los datos se carguen automáticamente, que «Actualizar clima» vuelva a consultarlos y que el botón se deshabilite mientras espero. Reviso el menú en ambas páginas, el enlace activo, el uso del teclado y el anuncio de estados. Compruebo anchos de escritorio, tableta y móvil, así como zoom del navegador. Para comprobar recuperación de errores puedo activar temporalmente el modo sin conexión en las herramientas del navegador y volver a pulsar el botón después de restablecer la red.
+
+Ejecuto las siete pruebas existentes del backend y las cuatro pruebas nuevas de JavaScript. Estas últimas usan el ejecutor nativo de Node.js, sin instalar paquetes; simulan el DOM y la red exclusivamente dentro de las pruebas:
+
+```powershell
+.\.venv\Scripts\python.exe -B -m unittest discover -s tests -v
+node --test tests/test_clima_frontend.cjs
+```
+
+Las pruebas de JavaScript verifican carga automática, endpoint relativo, formato numérico, texto seguro, icono, actualización, exclusión de consultas simultáneas, restauración del botón y manejo de errores HTTP, red, timeout y respuestas inválidas. La simulación del DOM no sustituye la revisión visual ni una evaluación con lector de pantalla en un navegador real.
 
 ## Autoría académica
 

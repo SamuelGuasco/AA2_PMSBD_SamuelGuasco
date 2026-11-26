@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechMindSolutions | Clima</title>
+    <!-- Reutilizo la identidad del sitio y agrego estilos exclusivos del reportero. -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/clima.css">
+    <script src="/js/clima.js" defer></script>
+</head>
+<body class="pagina-clima">
+    <header>
+        <img src="/images/logo/logo-techminds.png" alt="Logotipo de TechMindSolutions" width="200">
+    </header>
+    <!-- Conservo el menú adaptable y marco la página actual para lectores de pantalla. -->
+    <nav aria-label="Navegación principal">
+        <a href="/#inicio">Inicio</a>
+        <a href="/#empresa">Empresa</a>
+        <a href="/#productos">Productos</a>
+        <a href="/#oferta-del-mes">Oferta del mes</a>
+        <a href="/#localizacion">Localización</a>
+        <a href="/clima" aria-current="page">Clima</a>
+        <a href="/#contacto">Contacto</a>
+        <a href="/#noticias">Noticias</a>
+    </nav>
+    <main id="contenido">
+        <!-- Uso una sección con título y una lista descriptiva para relacionar cada medida con su valor. -->
+        <section class="reporte-clima" aria-labelledby="titulo-clima">
+            <h1 id="titulo-clima">Reporte meteorológico</h1>
+            <p class="clima-subtitulo">Consulta las condiciones meteorológicas actuales</p>
+            <div class="clima-tarjeta">
+                <!-- Mantengo los datos ocultos hasta validar una respuesta real; no invento valores iniciales. -->
+                <div id="clima-datos" aria-busy="false" hidden>
+                    <h2 id="clima-ciudad"></h2>
+                    <img id="clima-icono" width="100" height="100" alt="" hidden>
+                    <p id="clima-temperatura" class="clima-temperatura"></p>
+                    <p id="clima-descripcion" class="clima-descripcion"></p>
+                    <dl class="clima-medidas">
+                        <div><dt>Humedad</dt><dd id="clima-humedad"></dd></div>
+                        <div><dt>Velocidad del viento</dt><dd id="clima-viento"></dd></div>
+                    </dl>
+                </div>
+                <!-- Anuncio carga, éxito y errores sin desplazar el foco del teclado. -->
+                <p id="clima-estado" role="status" aria-live="polite" aria-atomic="true">Preparando la consulta meteorológica…</p>
+                <button id="actualizar-clima" class="boton" type="button" aria-controls="clima-datos" disabled>Actualizar clima</button>
+                <p class="clima-fuente">Fuente: <a href="https://openweathermap.org/">OpenWeatherMap</a></p>
+                <noscript><p>Activa JavaScript para consultar y actualizar el clima.</p></noscript>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>TechMindSolutions | Desarrollo web, tarjetas digitales NFC y ClozerIA CRM.</p>
+        <p>Proyecto académico de Ingeniería de Software de la Universidad Internacional del Ecuador (UIDE).</p>
+    </footer>
+</body>
+</html>

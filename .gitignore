@@ -16,3 +16,10 @@ __pycache__/
 
 # Archivos temporales y registros
 *.log
+*.tmp
+*.bak
+
+# Configuración local de IntelliJ IDEA y metadatos del sistema operativo
+.idea/
+Thumbs.db
+.DS_Store
